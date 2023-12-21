@@ -1,0 +1,51 @@
+---
+# Using the recommended settings of the implementation by https://github.com/ktatar
+# following the default.ini 
+audio:
+  sampling_rate: 44100
+  hop_length: 128
+
+  bins_per_octave: 48
+  num_octaves: 8
+  cqt_fmin: A1  # Never used actually
+  cqt_bit_depth: float64
+
+  n_iter: 4
+
+dataset:
+  datapath: ./soundscapes_sm_corr
+  train_dataset: audio
+  cqt_dataset: cqt
+  test_dataset: test
+  generate_test: False
+  overwrite_cqt: True
+  check_audio: True
+  check_dataset: True
+  workspace: 
+  run_number: 0
+  total_frames: 
+
+VAE:
+  latent_dim: 8 # 256
+  n_units: 32 # 2048
+  kl_beta: 0.01 # 0.001
+  device: cuda:3
+
+training:
+  epochs: 1000
+  save_best_model_after: 1000
+  learning_rate: 0.1 # 0.00005
+  # Need to lower the batch size to make this work for the given RAM
+  # batch_size: 131072
+  batch_size: 262144 # 65536
+  checkpoint_interval: 5
+
+extra:
+  normalize_examples: False
+  example_length: 10
+  plot_model: True
+
+  description: workstation
+  start: 
+  end: 
+  time_elapsed: 
