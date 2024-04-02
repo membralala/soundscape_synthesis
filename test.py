@@ -4,6 +4,14 @@ from dtaidistance import dtw
 from maad import features, sound
 
 
+def prune_longest(x1, x2):
+    if (x1_len := len(x1)) == (x2_len := len(x2)):
+        return x1, x2
+    print(f"Different lengths detected({x1_len}, {x2_len}). Pruning longer sample")
+    min_len = min(x1_len, x2_len)
+    return x1[:min_len], x2[:min_len]
+
+
 def test_log_spectral_distance(x1, x2, sr=44100):
     # Not sure, if this is correct!
     Sx1_power, _, _, _ = sound.spectrogram(x1, sr)
@@ -98,7 +106,9 @@ if __name__ == "__main__":
 
     test_result_list = []
     try:
-        for fname in src_path.glob("*.wav"):
+        fnames = list(src_path.glob("*.wav"))
+        fnames.sort()
+        for i, fname in enumerate(fnames):
             print(f"Processing {fname} ...")
             # Assuming that both files have the same name, samplerate and depth
             # Assuming samplerate = 44100 Hz, depth = 16 bit
@@ -110,6 +120,7 @@ if __name__ == "__main__":
                 x2, _ = sf.read(gt_fname)
 
             s = time.time()
+            x1, x2 = prune_longest(x1, x2)
             test_results = {"name": fname.name}
             test_results.update(test_bioindex_distance(x1, x2))
             test_results.update(
@@ -120,7 +131,9 @@ if __name__ == "__main__":
             )
             test_result_list.append(test_results)
             print(test_results)
+            print(f"Processed {i} / {len(fnames)}")
             print(f"time: {time.time() - s}")
+
         print("Saving results...")
         df = pd.DataFrame.from_dict(test_result_list)
         df.to_csv(src_path / "test_results.csv")
