@@ -17,14 +17,8 @@ def test_log_spectral_distance(x1, x2, sr=44100):
     Sx1_power, _, _, _ = sound.spectrogram(x1, sr)
     Sx2_power, _, _, _ = sound.spectrogram(x2, sr)
     return np.mean(
-        np.sqrt(
-            np.sum(
-                np.square(
-                    np.log(Sx1_power, where=(Sx1_power != 0))
-                    - np.log(Sx2_power, where=(Sx2_power != 0)),
-                )
-            )
-        )
+        np.sum(np.square(np.log(Sx1_power) - np.log(Sx2_power[:, :-1])), axis=0)
+        / Sx1_power.shape[0]
     )
 
 
