@@ -6,7 +6,7 @@ import soundfile as sf
 import torch
 
 
-def reconstruct(model, f_path, out_path):
+def reconstruct(model, f_path, out_path, cargs):
     x, sr = sf.read(f_path)
     x = torch.from_numpy(x).reshape(1, 1, -1).double()
     y_hat = model(x)

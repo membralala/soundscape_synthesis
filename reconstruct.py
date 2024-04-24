@@ -11,22 +11,23 @@ parser.add_argument("src", type=str)
 parser.add_argument("-o", "--out", type=str, required=True)
 parser.add_argument("--config", default="simple")
 parser.add_argument("--model", required=True)
+parser.add_argument("--cargs", nargs="+")
 args = parser.parse_args()
 
 # Get paths
 src_path = pathlib.Path(args.src)
 out_path = pathlib.Path(args.out)
 os.makedirs(out_path, exist_ok=True)
-# Get config module.
 
-config = importlib.import_module(f"configs.{args.config}")
+# Get config module.
+config = importlib.import_module(f"reconstructions.{args.config}")
 
 # Load model
 torch.set_grad_enabled(False)
 model = torch.jit.load(args.model).eval().double()
 
 # Save setup_config
-setup = {"model": args.model, "config": args.config}
+setup = {"model": args.model, "config": args.config, "config_args": args.cargs}
 with open(out_path / "_reconstruction_setup.yaml", "w") as f:
     f.write(yaml.dump(setup, Dumper=yaml.Dumper))
 
@@ -36,4 +37,4 @@ for fname in src_path.glob("*.wav"):
     # Assuming a method reconstruct(model, fname, out_path) -> None
     # in each config as interface.
     print(f"Processing {fname} ...")
-    config.reconstruct(model, fname, out_path)
+    config.reconstruct(model, fname, out_path, args.cargs)

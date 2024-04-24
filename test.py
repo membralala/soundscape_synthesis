@@ -16,8 +16,9 @@ def test_log_spectral_distance(x1, x2, sr=44100):
     # Not sure, if this is correct!
     Sx1_power, _, _, _ = sound.spectrogram(x1, sr)
     Sx2_power, _, _, _ = sound.spectrogram(x2, sr)
+    # Add a really small value to the spectra to prevent log(0)
     return np.mean(
-        np.sum(np.square(np.log(Sx1_power) - np.log(Sx2_power[:, :-1])), axis=0)
+        np.sum(np.square(np.log(Sx1_power + 1e-12) - np.log(Sx2_power + 1e-12)), axis=0)
         / Sx1_power.shape[0]
     )
 
@@ -93,16 +94,74 @@ if __name__ == "__main__":
     parser.add_argument("src", type=str)
     parser.add_argument("-gt", "--truth", type=str, required=True)
     parser.add_argument("--ld_model")
+    parser.add_argument("--patch", type=str)
     args = parser.parse_args()
 
     src_path = pathlib.Path(args.src)
     ground_truth_path = pathlib.Path(args.truth)
 
     test_result_list = []
-    try:
+    if not args.patch:
+        try:
+            fnames = list(src_path.glob("*.wav"))
+            fnames.sort()
+            for i, fname in enumerate(fnames):
+                print(f"Processing {fname} ...")
+                # Assuming that both files have the same name, samplerate and depth
+                # Assuming samplerate = 44100 Hz, depth = 16 bit
+                x1, sr = sf.read(fname)
+                gt_fname = ground_truth_path / fname.name
+                if os.path.samefile(fname.resolve(), gt_fname.resolve()):
+                    x2 = np.copy(x1)
+                else:
+                    x2, _ = sf.read(gt_fname)
+
+                s = time.time()
+                x1, x2 = prune_longest(x1, x2)
+                test_results = {"name": fname.name}
+                test_results.update(test_bioindex_distance(x1, x2))
+                test_results.update(
+                    {
+                        "lsd": test_log_spectral_distance(x1, x2),
+                        "dtw": test_dynamic_time_wrapping(x1, x2),
+                    }
+                )
+                test_result_list.append(test_results)
+                print(test_results)
+                print(f"Processed {i} / {len(fnames)}")
+                print(f"time: {time.time() - s}")
+
+            print("Saving results...")
+            df = pd.DataFrame.from_dict(test_result_list)
+            df.to_csv(src_path / "test_results.csv")
+        except KeyboardInterrupt:
+            print("Quitting due to forced exit.")
+            while True:
+                saving = input("Save results until this point? [y/n]")
+                if saving == "y":
+                    df = pd.DataFrame.from_dict(test_result_list)
+                    df.to_csv(src_path / "test_results.csv")
+                elif saving == "n":
+                    break
+                else:
+                    print("No valid entry.")
+
+            exit(-1)
+    else:
+        df = pd.read_csv(src_path / "test_results.csv", index_col=0)
+        command_method_mapping = {
+            "lsd": test_log_spectral_distance,
+            "dtw": test_dynamic_time_wrapping,
+        }
+        df = df.sort_values("name")
+        df = df.reset_index(drop=True)
+
         fnames = list(src_path.glob("*.wav"))
         fnames.sort()
+
+        test_results = []
         for i, fname in enumerate(fnames):
+            assert fname.name == df.iloc[i]["name"]
             print(f"Processing {fname} ...")
             # Assuming that both files have the same name, samplerate and depth
             # Assuming samplerate = 44100 Hz, depth = 16 bit
@@ -115,32 +174,11 @@ if __name__ == "__main__":
 
             s = time.time()
             x1, x2 = prune_longest(x1, x2)
-            test_results = {"name": fname.name}
-            test_results.update(test_bioindex_distance(x1, x2))
-            test_results.update(
-                {
-                    "lsd": test_log_spectral_distance(x1, x2),
-                    "dtw": test_dynamic_time_wrapping(x1, x2),
-                }
-            )
-            test_result_list.append(test_results)
-            print(test_results)
+            test_results.append(result := command_method_mapping[args.patch](x1, x2))
+            print(f"Result: {result}")
             print(f"Processed {i} / {len(fnames)}")
             print(f"time: {time.time() - s}")
 
+        df[args.patch] = test_results
         print("Saving results...")
-        df = pd.DataFrame.from_dict(test_result_list)
         df.to_csv(src_path / "test_results.csv")
-    except KeyboardInterrupt:
-        print("Quitting due to forced exit.")
-        while True:
-            saving = input("Save results until this point? [y/n]")
-            if saving == "y":
-                df = pd.DataFrame.from_dict(test_result_list)
-                df.to_csv(src_path / "test_results.csv")
-            elif saving == "n":
-                break
-            else:
-                print("No valid entry.")
-
-        exit(-1)
