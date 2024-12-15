@@ -4,6 +4,7 @@ was used in the SALVE project. That is, a filename - also called Recodring_ID - 
 structured as '<Device_ID>_<datetime>.wav' where datetime is formatted as '%Y%m%d_%H%M%S'.
 """
 
+import datetime
 import os
 import pathlib
 import re
@@ -13,6 +14,9 @@ import pandas as pd
 """Initial meta data scheme with headers for all relevant information, that can be 
 extracted from file path and filename without opening the file descriptor."""
 INIT_SCHEME = ["Record_ID", "Device_ID", "Datetime", "Path"]
+
+"""The datetime format convention used for the naming of the SALVE soundscapes"""
+SALVE_DATETIME_FORMAT = "%Y%m%d_%H%M%S"
 
 
 class InvalidRecordIdException(Exception):
@@ -131,7 +135,40 @@ def read_metadata_from_directory(
     return df
 
 
+def read_datetime(date_string: str) -> datetime.datetime:
+    """Convert datetime string to datetime.datetime object.
+
+    Parameters
+    ----------
+    date_string : str
+        The given datetime string
+
+    Returns
+    -------
+    datetime.datetime
+        The datetime object
+    """
+    return datetime.datetime.strptime(date_string, SALVE_DATETIME_FORMAT)
+
+
+def write_datetime(date_time: datetime.datetime) -> str:
+    """Convert datetime.datetime object to datetime string.
+
+    Parameters
+    ----------
+    date_time : datetime.datetime
+        The datetime object
+
+    Returns
+    -------
+    str
+        The datetime string
+    """
+    return datetime.datetime.strftime(date_time, SALVE_DATETIME_FORMAT)
+
+
 if __name__ == "__main__":
+    # Test validation
     valid_record_ids = [
         "S4A09106_20190507_074400.wav",  # valid format .wav
         "S4A09106_20190507_074400.WAV",  # also valid format .WAV
@@ -150,4 +187,6 @@ if __name__ == "__main__":
     for invalid_record_id in invalid_record_ids:
         assert is_valid_record_id(invalid_record_id) == False
 
-    print(read_metadata_from_directory(pathlib.Path("../data"), recursive=True))
+    # Test datetime string formatting
+    date_string = "20190507_074400"
+    assert date_string == write_datetime(read_datetime(date_string))
