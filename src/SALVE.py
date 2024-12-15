@@ -38,7 +38,6 @@ def is_valid_record_id(filename: str) -> bool:
     bool
         Whether the given filename string follows the convention
     """
-
     return (
         True
         if re.match(r"[a-zA-Z0-9]+_[0-9]{8}_[0-9]{6}.[(wav)(WAV)]", filename)
@@ -71,7 +70,6 @@ def read_metadata_from_filename(
     InvalidRecordIdException
         If filename does not follow the SALVE naming convention
     """
-
     if isinstance(filename, str):
         srcpath = pathlib.Path().resolve() / filename
     elif isinstance(filename, pathlib.Path):
