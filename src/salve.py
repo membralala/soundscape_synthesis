@@ -1,6 +1,6 @@
 """ Handle soundscape data from the SALVE project. This module provides functionalities
 for soundscape data management. For that it assumes a certain file naming convention, that 
-was used in the SALVE project. That is, a filename - also called Recodring_ID - is 
+was used in the SALVE project. That is, a filename - also called Recording_ID - is 
 structured as '<Device_ID>_<datetime>.wav' where datetime is formatted as '%Y%m%d_%H%M%S'.
 """
 
@@ -13,7 +13,7 @@ import pandas as pd
 
 """Initial meta data scheme with headers for all relevant information, that can be 
 extracted from file path and filename without opening the file descriptor."""
-INIT_SCHEME = ["Record_ID", "Device_ID", "Datetime", "Path"]
+INIT_SCHEME = ["Recording_ID", "Device_ID", "Datetime", "Path"]
 
 """The datetime format convention used for the naming of the SALVE soundscapes"""
 SALVE_DATETIME_FORMAT = "%Y%m%d_%H%M%S"
@@ -79,14 +79,14 @@ def read_metadata_from_filename(
     if not is_valid_record_id(srcpath.name):
         raise InvalidRecordIdException(f"'{srcpath.name}' is not a valid Record_ID.")
 
-    record_id = srcpath.name
+    recording_id = srcpath.name
     device_id, raw_date, raw_time = srcpath.stem.split("_")
     datetime_str = "_".join([raw_date, raw_time])
-    path = os.path.relpath(srcpath, pathlib.Path(relpath))
+    path = srcpath
 
     return pd.Series(
         data=dict(
-            Record_ID=record_id,
+            Recording_ID=recording_id,
             Device_ID=device_id,
             Datetime=datetime_str,
             Path=path,
