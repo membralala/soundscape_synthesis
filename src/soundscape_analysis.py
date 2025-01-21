@@ -5,13 +5,14 @@ a reading of the given files or at least of their meta data.
 """
 
 import pathlib
+from typing import Union
 
 import numpy as np
 import soundfile as sf
 from maad import features, sound
 
 
-def get_file_info(filename: str | pathlib.Path) -> dict:
+def get_file_info(filename: Union[str, pathlib.Path]) -> dict:
     """Read meta data information from an audio file header.
 
     Parameters
@@ -37,7 +38,7 @@ def get_file_info(filename: str | pathlib.Path) -> dict:
     return info
 
 
-def get_bioindex_suite(filename: str | pathlib.Path) -> dict:
+def get_bioindex_suite(filename: Union[str, pathlib.Path]) -> dict:
     """Calculate all bioindices that were compared in the thesis.
 
     Parameters

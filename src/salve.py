@@ -8,6 +8,7 @@ import datetime
 import os
 import pathlib
 import re
+from typing import Union
 
 import pandas as pd
 
@@ -46,7 +47,7 @@ def is_valid_record_id(filename: str) -> bool:
 
 
 def read_metadata_from_filename(
-    filename: str | pathlib.Path, relpath: str | pathlib.Path = None
+    filename: Union[str, pathlib.Path], relpath: Union[str, pathlib.Path] = None
 ) -> pd.Series:
     """Extract metadata from soundscape filename, that follows the SALVE naming convention.
 
@@ -95,7 +96,7 @@ def read_metadata_from_filename(
 
 
 def read_metadata_from_directory(
-    dirname: str | pathlib.Path, recursive: bool = False
+    dirname: Union[str, pathlib.Path], recursive: bool = False
 ) -> pd.DataFrame:
     """Extract metadata from all soundscape filenames in a given directory, that follow
     the SALVE naming convention.
